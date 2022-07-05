@@ -1586,14 +1586,23 @@ obj:
 					} else {
 						((UDATA*)(((J9SFStackFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
 					}
+					switch (monitorRC) {
 #if JAVA_SPEC_VERSION >= 16
-					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+					case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-					} else
+						break;
 #endif /* JAVA_SPEC_VERSION >= 16 */
-					{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+					case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+						rc = THROW_CRIU_SINGLE_THREAD_MODE;
+						break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
+						break;
+					default:
+						Assert_VM_unreachable();
 					}
 					goto done;
 				}
@@ -1654,17 +1663,26 @@ done:
 
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 			*bp |= J9SF_A0_INVISIBLE_TAG;
+			switch (monitorRC) {
 #if JAVA_SPEC_VERSION >= 16
-			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+			case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 				_currentThread->tempSlot = (UDATA) syncObject;
 				rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-			} else
+				break;
 #endif /* JAVA_SPEC_VERSION >= 16 */
-			{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+				rc = THROW_CRIU_SINGLE_THREAD_MODE;
+				break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+			case J9_OBJECT_MONITOR_OOM:
 				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
 				 * Note that BP can not have changed during a failed enter.
 				 */
 				rc = THROW_MONITOR_ALLOC_FAIL;
+				break;
+			default:
+				Assert_VM_unreachable();
 			}
 			goto done;
 		}
@@ -1780,14 +1798,23 @@ throwStackOverflow:
 				if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
+					switch (monitorRC) {
 #if JAVA_SPEC_VERSION >= 16
-					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+					case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 						_currentThread->tempSlot = (UDATA) syncObject;
 						rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-					} else
+						break;
 #endif /* JAVA_SPEC_VERSION >= 16 */
-					{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+					case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+						rc = THROW_CRIU_SINGLE_THREAD_MODE;
+						break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
+						break;
+					default:
+						Assert_VM_unreachable();
 					}
 					goto done;
 				}
@@ -2144,14 +2171,23 @@ done:
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+				switch (monitorRC) {
 #if JAVA_SPEC_VERSION >= 16
-				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+				case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 					_currentThread->tempSlot = (UDATA) receiver;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-				} else
+					break;
 #endif /* JAVA_SPEC_VERSION >= 16 */
-				{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+					rc = THROW_CRIU_SINGLE_THREAD_MODE;
+					break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;
+					break;
+				default:
+					Assert_VM_unreachable();
 				}
 				goto done;
 			}
@@ -2610,13 +2646,30 @@ done:
 		_sp += (slotCount - 1);
 	}
 
-	/* java.lang.Thread: public static native Thread _currentThread(); */
+	/* java.lang.Thread: public static native Thread currentThread(); */
 	VMINLINE VM_BytecodeAction
 	inlThreadCurrentThread(REGISTER_ARGS_LIST)
 	{
 		returnObjectFromINL(REGISTER_ARGS, _currentThread->threadObject, 0);
 		return EXECUTE_BYTECODE;
 	}
+
+#if JAVA_SPEC_VERSION >= 19
+	/* java.lang.Thread: native void setCurrentThread(Thread thread); */
+	VMINLINE VM_BytecodeAction
+	inlThreadSetCurrentThread(REGISTER_ARGS_LIST)
+	{
+		j9object_t thread = ((j9object_t*)_sp)[0];
+		j9object_t receiverObject = ((j9object_t*)_sp)[1];
+		J9VMThread *targetThread = J9VMJAVALANGTHREAD_THREADREF(_currentThread, receiverObject);
+		/* This is a package private method, currently the receiver object is Thread.currentCarrierThread()
+		 * which is assumed alive, hence targetThread can't be null.
+		 */
+		targetThread->threadObject = thread;
+		returnVoidFromINL(REGISTER_ARGS, 2);
+		return EXECUTE_BYTECODE;
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* java.lang.Thread: public static native Thread onSpinWait(); */
 	VMINLINE VM_BytecodeAction
@@ -2638,7 +2691,7 @@ done:
 		j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(_currentThread, _currentThread->threadObject);
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, threadLock)) {
 			UDATA monitorRC = objectMonitorEnterNonBlocking(_currentThread, threadLock);
-			if (J9_OBJECT_MONITOR_OOM == monitorRC) {
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
 				rc = THROW_MONITOR_ALLOC_FAIL;
 				goto done;
 			} else if (J9_OBJECT_MONITOR_BLOCKING == monitorRC) {
@@ -8124,14 +8177,23 @@ done:
 			 * mutually exclusive.
 			 */
 			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+				switch (monitorRC) {
 #if JAVA_SPEC_VERSION >= 16
-				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+				case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 					_currentThread->tempSlot = (UDATA) obj;
 					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-				} else
+					break;
 #endif /* JAVA_SPEC_VERSION >= 16 */
-				{
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+					rc = THROW_CRIU_SINGLE_THREAD_MODE;
+					break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;
+					break;
+				default:
+					Assert_VM_unreachable();
 				}
 			} else {
 				if (J9_UNEXPECTED(!VM_ObjectMonitor::recordBytecodeMonitorEnter(_currentThread, (j9object_t)monitorRC, _arg0EA))) {
@@ -9754,6 +9816,9 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD),
+#if JAVA_SPEC_VERSION >= 19
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_SET_CURRENT_THREAD),
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_STRING_INTERN),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS),
@@ -9904,6 +9969,14 @@ public:
 #define PERFORM_ACTION_VALUE_TYPE_IMSE
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#define PERFORM_ACTION_CRIU_STM_THROW \
+	case THROW_CRIU_SINGLE_THREAD_MODE: \
+	goto throwCRIUSingleThreadModeException;
+#else /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#define PERFORM_ACTION_CRIU_STM_THROW
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 #define PERFORM_ACTION(functionCall) \
 	do { \
 		DEBUG_UPDATE_VMSTRUCT(); \
@@ -9961,6 +10034,7 @@ public:
 		case RUN_METHOD_COMPILED: \
 			goto i2j; \
 		PERFORM_ACTION_VALUE_TYPE_IMSE \
+		PERFORM_ACTION_CRIU_STM_THROW \
 		DEBUG_ACTIONS \
 		default: \
 			Assert_VM_unreachable(); \
@@ -10235,6 +10309,10 @@ runMethod: {
 		goto i2j;
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD):
 		PERFORM_ACTION(inlThreadCurrentThread(REGISTER_ARGS));
+#if JAVA_SPEC_VERSION >= 19
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_THREAD_SET_CURRENT_THREAD):
+		PERFORM_ACTION(inlThreadSetCurrentThread(REGISTER_ARGS));
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_OBJECT_GET_CLASS):
 		PERFORM_ACTION(inlObjectGetClass(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INL_CLASS_IS_ASSIGNABLE_FROM):
@@ -10619,6 +10697,15 @@ valueTypeIllegalMonitorState:
 	VMStructHasBeenUpdated(REGISTER_ARGS);
 	goto throwCurrentException;
 #endif /* JAVA_SPEC_VERSION >= 16 */
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+throwCRIUSingleThreadModeException:
+	updateVMStruct(REGISTER_ARGS);
+	prepareForExceptionThrow(_currentThread);
+	setCRIUSingleThreadModeJVMCRIUException(_currentThread, 0, 0);
+	VMStructHasBeenUpdated(REGISTER_ARGS);
+	goto throwCurrentException;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 incompatibleClassChange:
 	updateVMStruct(REGISTER_ARGS);

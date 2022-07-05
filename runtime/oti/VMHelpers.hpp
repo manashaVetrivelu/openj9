@@ -80,6 +80,9 @@ typedef enum {
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL,
 	J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE,
 	J9_BCLOOP_SEND_TARGET_INL_THREAD_CURRENT_THREAD,
+#if JAVA_SPEC_VERSION >= 19
+	J9_BCLOOP_SEND_TARGET_INL_THREAD_SET_CURRENT_THREAD,
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	J9_BCLOOP_SEND_TARGET_INL_STRING_INTERN,
 	J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY,
 	J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS,
@@ -939,7 +942,8 @@ done:
 		if ((unicode >= 0x01) && (unicode <= 0x7F)) {
 			utfChars[0] = (U_8)unicode;
 		} else {
-			utfChars[0] = (U_8)(((unicode >>6 ) & 0x1F) | 0xC0);
+			/* use 0x3 since we are using I_8, so only 2 bits matter here */
+			utfChars[0] = (U_8)(((unicode >> 6) & 0x3) | 0xC0);
 			utfChars[1] = (U_8)((unicode & 0x3F) | 0x80);
 			length = 2;
 		}

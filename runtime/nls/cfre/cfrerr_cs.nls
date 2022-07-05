@@ -1462,7 +1462,7 @@ J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_FINAL_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=P\u0159\u00edznak p\u0159\u00edstupu ACC_PERMITS_VALUE by nem\u011bl b\u00fdt nastaven na neabstraktn\u00ed t\u0159\u00eddu.
+J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS=P\u0159\u00edznak p\u0159\u00edstupu ACC_PERMITS_VALUE by nem\u011bl b\u00fdt nastaven na neabstraktn\u00ed t\u0159\u00edd\u011b.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_PERMITS_VALUE_ON_NON_ABSTRACT_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1554,7 +1554,7 @@ J9NLS_CFR_ERR_MAJOR_VERSION2.system_action=The JVM will throw a verification or 
 J9NLS_CFR_ERR_MAJOR_VERSION2.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_MINOR_VERSION2=chybn\u00e1 vedlej\u0161\u00ed verze t\u0159\u00eddy %2$.*1$s. Z\u00edsk\u00e1na vedlej\u0161\u00ed verze .%3$u, ale .0 je jedin\u00e1 platn\u00e1 vedlej\u0161\u00ed verze pro hlavn\u00ed verzi %4$u; offset=%5$u
+J9NLS_CFR_ERR_MINOR_VERSION2=Chybn\u00e1 vedlej\u0161\u00ed verze t\u0159\u00eddy %2$.*1$s. Z\u00edsk\u00e1na vedlej\u0161\u00ed verze .%3$u, ale .0 je jedin\u00e1 platn\u00e1 vedlej\u0161\u00ed verze pro hlavn\u00ed verzi %4$u; offset=%5$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_1=4
 J9NLS_CFR_ERR_MINOR_VERSION2.sample_input_2=main
