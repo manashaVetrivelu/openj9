@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +47,7 @@ J9::MonitorTable::init(
    if (!tableMem) return 0;
    TR::MonitorTable *table = new (tableMem) TR::MonitorTable();
 
+   table->_javaVM = javaVM;
    table->_portLib = portLib;
    table->_monitors.setFirst(0);
 
@@ -252,7 +253,14 @@ J9::MonitorTable::readReleaseClassUnloadMonitor(int32_t compThreadIndex)
       }
    else
       {
+      // This situation should not appear under normal circumstances.
+      // It may appear in jitdump scenarios when the JVM is going down anyway.
+      J9VMThread *vmThread = _javaVM->internalVMFunctions->currentVMThread(_javaVM);
+      bool diagnosticThread = TR::CompilationInfo::isVMThreadDiagnosticThread(vmThread);
       TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
       return -1; // could not release monitor
       }
    }
+
+
+
