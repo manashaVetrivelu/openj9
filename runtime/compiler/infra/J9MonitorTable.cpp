@@ -257,7 +257,7 @@ J9::MonitorTable::readReleaseClassUnloadMonitor(int32_t compThreadIndex)
       // It may appear in jitdump scenarios when the JVM is going down anyway.
       J9VMThread *vmThread = _javaVM->internalVMFunctions->currentVMThread(_javaVM);
       bool diagnosticThread = TR::CompilationInfo::isVMThreadDiagnosticThread(vmThread);
-      TR_ASSERT(false, "comp thread %d does not have classUnloadMonitor", compThreadIndex);
+      TR_ASSERT(diagnosticThread, "comp thread %d does not have classUnloadMonitor", compThreadIndex); //changed from false to diagnosticThread
       return -1; // could not release monitor
       }
    }
