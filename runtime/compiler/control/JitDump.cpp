@@ -64,34 +64,47 @@ struct ILOfCrashedThreadParamenters
 static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
    {
+      //adding printf statements to instrument the method and figure out where the assert is triggered. 
+      printf("line 67");
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
       TR_J9VMBase::get(p.vmThread->javaVM->jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
+   printf("line 72");
    bci.printByteCodes();
+   printf("line 74");
 
    // This call will reset the previously recorded symbol reference size to 0, thus indicating to the debug object that
    // we should print all the symbol references in the symbol reference table when tracing the trees. By default the
    // debug object will only print new symbol references since the last time they were printed. Here we are in a
    // crashed thread state so we can safely reset this coutner so we print all the symbol references.
    p.comp->setPrevSymRefTabSize(0);
+   printf("line 81");
    p.comp->dumpMethodTrees("Trees");
+   printf("line 83");
 
    if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
       {
       TR_Debug *debug = p.comp->getDebug();
+      prinf("line 88");
       debug->dumpMethodInstrs(p.jitdumpFile, "Post Binary Instructions", false, true);
+      printf("line 90");
       debug->print(p.jitdumpFile, p.comp->cg()->getSnippetList());
+      printf("line 92");
       debug->dumpMixedModeDisassembly();
+      printf("line 94");
       }
    else if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
       {
       // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
       // valid before codegen, since the codegen will decrement the node counts as part of instruction selection
+      printf("line 100");
       p.comp->verifyTrees();
+      printf("line 102");
       p.comp->verifyBlocks();
+      printf("line 104");
       }
-
+   printf("line 106");
    return 0;
    }
 
