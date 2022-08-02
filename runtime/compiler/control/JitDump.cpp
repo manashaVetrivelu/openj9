@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "control/JitDump.hpp"
-
+#include <iostream> //JUST ADDED THIS FOR COUT; DELETE BEFORE PR
 #include "codegen/CodeGenerator.hpp"
 #include "env/VMJ9.h"
 #include "control/MethodToBeCompiled.hpp"
@@ -65,7 +65,7 @@ static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
    {
       //adding printf statements to instrument the method and figure out where the assert is triggered. 
-      fprintf(stderr,"line 67");
+      cout << "line 67";
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
