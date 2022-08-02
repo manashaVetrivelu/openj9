@@ -64,12 +64,12 @@ static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
    {
       //adding printf statements to instrument the method and figure out where the assert is triggered. 
-   j9nls_printf("line 67");
+   fprintf(stdout, "line 67");
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
       TR_J9VMBase::get(p.vmThread->javaVM->jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
-   j9nls_printf("line 72");
+   fprintf(stdout,"line 72");
    bci.printByteCodes();
    printf("line 74");
 
