@@ -85,7 +85,7 @@ traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg
    if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
       {
       TR_Debug *debug = p.comp->getDebug();
-      prinf("line 88");
+      printf("line 88");
       debug->dumpMethodInstrs(p.jitdumpFile, "Post Binary Instructions", false, true);
       printf("line 90");
       debug->print(p.jitdumpFile, p.comp->cg()->getSnippetList());
