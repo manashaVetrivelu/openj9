@@ -64,46 +64,46 @@ static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
    {
       //adding printf statements to instrument the method and figure out where the assert is triggered. 
-   fprintf(stdout, "line 67");
+   fprintf(stderr, "line 67");
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
       TR_J9VMBase::get(p.vmThread->javaVM->jitConfig, p.vmThread), p.comp, p.comp->getSymRefTab());
-   fprintf(stdout,"line 72");
+   fprintf(stderr,"line 72\n");
    bci.printByteCodes();
-   printf("line 74");
+   fprintf(stderr,"line 74\n");
 
    // This call will reset the previously recorded symbol reference size to 0, thus indicating to the debug object that
    // we should print all the symbol references in the symbol reference table when tracing the trees. By default the
    // debug object will only print new symbol references since the last time they were printed. Here we are in a
    // crashed thread state so we can safely reset this coutner so we print all the symbol references.
    p.comp->setPrevSymRefTabSize(0);
-   printf("line 81");
+   fprintf(stderr,"line 81\n");
    p.comp->dumpMethodTrees("Trees");
-   printf("line 83");
+   fprintf(stderr,"line 83\n");
 
    if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_CODEGEN) == J9VMSTATE_JIT_CODEGEN)
       {
       TR_Debug *debug = p.comp->getDebug();
-      printf("line 88");
+      fprintf(stderr,"line 88\n");
       debug->dumpMethodInstrs(p.jitdumpFile, "Post Binary Instructions", false, true);
-      printf("line 90");
+      fprintf(stderr,"line 90\n");
       debug->print(p.jitdumpFile, p.comp->cg()->getSnippetList());
-      printf("line 92");
+      fprintf(stderr,"line 92\n");
       debug->dumpMixedModeDisassembly();
-      printf("line 94");
+      fprintf(stderr,"line 94\n");
       }
    else if ((p.vmThread->omrVMThread->vmState & J9VMSTATE_JIT_OPTIMIZER) == J9VMSTATE_JIT_OPTIMIZER)
       {
       // Tree verification is only valid during optimizations as it relies on consistent node counts which are only
       // valid before codegen, since the codegen will decrement the node counts as part of instruction selection
-      printf("line 100");
+      fprintf(stderr,"line 100\n");
       p.comp->verifyTrees();
-      printf("line 102");
+      fprintf(stderr,"line 102\n");
       p.comp->verifyBlocks();
-      printf("line 104");
+      fprintf(stderr,"line 104\n");
       }
-   printf("line 106");
+   fprintf(stderr,"line 106\n");
    return 0;
    }
 
@@ -140,10 +140,12 @@ traceILOfCrashedThread(J9VMThread *vmThread, TR::Compilation *comp, TR::FILE *ji
                 J9PORT_SIG_FLAG_SIGSEGV | J9PORT_SIG_FLAG_SIGFPE |
                 J9PORT_SIG_FLAG_SIGILL  | J9PORT_SIG_FLAG_SIGBUS | J9PORT_SIG_FLAG_SIGTRAP;
 
+   fprintf(stderr, "line 143\n");
    uintptr_t result = 0;
    j9sig_protect(traceILOfCrashedThreadProtected, static_cast<void *>(&p),
       jitDumpSignalHandler,
       vmThread, flags, &result);
+   fprintf(stderr,"line 148\n");
 
    trfprintf(jitdumpFile, "</ilOfCrashedThread>\n");
 
@@ -623,7 +625,9 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             }
 #endif
 
+fprintf(stderr,"line 627\n");
          traceILOfCrashedThread(crashedThread, comp, jitdumpFile);
+fprintf(stderr,"line 629\n");
 
          TR_MethodToBeCompiled *methodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
          if (NULL != methodBeingCompiled && methodBeingCompiled->getMethodDetails().isOrdinaryMethod())
