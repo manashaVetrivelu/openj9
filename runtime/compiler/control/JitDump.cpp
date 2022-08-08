@@ -64,7 +64,7 @@ static uintptr_t
 traceILOfCrashedThreadProtected(struct J9PortLibrary *portLib, void *handler_arg)
    {
       //adding printf statements to instrument the method and figure out where the assert is triggered. 
-   fprintf(stderr, "line 67");
+   fprintf(stderr, "line 67, new\n"); //added the new to see if the changes were getting updated 
    auto p = *static_cast<ILOfCrashedThreadParamenters*>(handler_arg);
 
    TR_J9ByteCodeIlGenerator bci(p.comp->ilGenRequest().details(), p.comp->getMethodSymbol(),
