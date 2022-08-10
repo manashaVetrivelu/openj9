@@ -338,7 +338,11 @@ bool acquireVMaccessIfNeeded(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
 #if !defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
             if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR) || TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug))
 #endif
-               hadClassUnloadMonitor = TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId()) >= 0;
+               hadClassUnloadMonitor = TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) > 0;
+               printf(stderr, "checking to see if this worked\n");
+               if (hadClassUnloadMonitor)
+                  TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId());
+                  
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
             // We must have had classUnloadMonitor by the way we architected the application
             TR_ASSERT(hadClassUnloadMonitor, "Comp thread must hold classUnloadMonitor when compiling without VMaccess");
