@@ -423,11 +423,7 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
          }
 #endif
 
-      // Release the class unload RW mutex
-      while (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(threadCompInfo->getCompThreadId()) > 0)
-         {
-         TR::MonitorTable::get()->readReleaseClassUnloadMonitor(threadCompInfo->getCompThreadId());
-         }
+      
       }
 
    TR::CompilationInfoPerThread *recompilationThreadInfo = compInfo->getCompilationInfoForDiagnosticThread();
@@ -628,6 +624,12 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
 fprintf(stderr,"line 627\n");
          traceILOfCrashedThread(crashedThread, comp, jitdumpFile);
 fprintf(stderr,"line 629\n");
+
+         // Release the class unload RW mutex
+         while (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(threadCompInfo->getCompThreadId()) > 0)
+         {
+            TR::MonitorTable::get()->readReleaseClassUnloadMonitor(threadCompInfo->getCompThreadId());
+         }
 
          TR_MethodToBeCompiled *methodBeingCompiled = threadCompInfo->getMethodBeingCompiled();
          if (NULL != methodBeingCompiled && methodBeingCompiled->getMethodDetails().isOrdinaryMethod())
