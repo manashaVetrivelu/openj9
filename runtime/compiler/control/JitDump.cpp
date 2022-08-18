@@ -620,10 +620,10 @@ runJitdump(char *label, J9RASdumpContext *context, J9RASdumpAgent *agent)
             stream->read<JITServer::Void>();
             }
 #endif
-
-fprintf(stderr,"line 627\n");
+         {
+         TR::VMAccessCriticalSection traceIL(TR_J9VMBase::get(jitConfig, crashedThread));
          traceILOfCrashedThread(crashedThread, comp, jitdumpFile);
-fprintf(stderr,"line 629\n");
+         }
 
          // Release the class unload RW mutex
          while (TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(threadCompInfo->getCompThreadId()) > 0)
